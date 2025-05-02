@@ -2,3 +2,7 @@ streamlit
 python-docx
 plotly
 matplotlib
+pdfplumber
+pandas 
+openpyxl
+

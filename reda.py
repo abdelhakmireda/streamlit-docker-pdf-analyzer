@@ -5,6 +5,9 @@ from docx import Document
 import io
 import plotly.express as px
 import matplotlib.pyplot as plt
+import tempfile
+import pdfplumber
+import pandas as pd
 
 # Configuration de la page
 st.set_page_config(page_title="💖 FSJES Chatbot 💖", page_icon="🎓", layout="centered")
@@ -38,7 +41,7 @@ st.markdown('<div class="title">🎓 Chatbot IA - FSJES d\'Ain Chock 🎓</div>'
 # Barre de navigation
 menu = st.sidebar.radio(
     "Naviguez entre les sections 💡",
-    ["Accueil", "Impact de l'IA au Maroc", "Calculs pratiques économiques", "Correcteur d'orthographe", "Chatbot"],
+    ["Accueil", "Impact de l'IA au Maroc", "Calculs pratiques économiques", "Correcteur d'orthographe", "Chatbot", "Extraction PDF"],
     index=0
 )
 
@@ -75,7 +78,25 @@ def export_to_word(content, filename="resultat.docx"):
                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
     except Exception as e:
         st.error(f"❌ Erreur lors de l’export : {e}")
+# Extraction de données depuis PDF
+def extract_data_from_pdf(pdf_file):
+    with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+        tmp_file.write(pdf_file.read())
+        tmp_filename = tmp_file.name
 
+    with pdfplumber.open(tmp_filename) as pdf:
+        page = pdf.pages[0]
+        table = page.extract_table()
+
+    if table:
+        df = pd.DataFrame(table[1:], columns=table[0])
+        return df
+    else:
+        return None
+
+# Sauvegarder en Excel
+def save_to_excel(df, output_file="FSJES.xlsx"):
+    df.to_excel(output_file, index=False, engine="openpyxl")
 # Accueil
 if menu == "Accueil":
     st.header("👩‍🎓 Présentation du projet")
@@ -127,6 +148,31 @@ elif menu == "Impact de l'IA au Maroc":
                 export_to_word(response, filename="reponse_ia_maroc.docx")
         else:
             st.error("Veuillez entrer une question.")
+# Extraction PDF vers Excel
+elif menu == "Extraction PDF":
+    st.header("📄 Extraction de données depuis un PDF")
+    uploaded_pdf = st.file_uploader("Choisis un fichier PDF", type=["pdf", "application/pdf"])
+    
+    if uploaded_pdf:
+        df = extract_data_from_pdf(uploaded_pdf)
+        
+        if df is not None:
+            st.write("Données extraites avec succès ! Voici un aperçu :")
+            st.dataframe(df)
+            
+            if st.button("Exporter vers Excel"):
+                save_to_excel(df)
+                st.success("Fichier Excel généré avec succès ! Téléchargez-le ci-dessous.")
+                
+                with open("output.xlsx", "rb") as f:
+                    st.download_button(
+                        label="Télécharger le fichier Excel",
+                        data=f,
+                        file_name="output.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+        else:
+            st.error("Aucune donnée valide trouvée dans le PDF. Vérifie que le format du tableau est correct.")
 
 # Calculs pratiques économiques
 elif menu == "Calculs pratiques économiques":
