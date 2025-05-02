@@ -164,11 +164,11 @@ elif menu == "Extraction PDF":
                 save_to_excel(df)
                 st.success("Fichier Excel généré avec succès ! Téléchargez-le ci-dessous.")
                 
-                with open("output.xlsx", "rb") as f:
+                with open("FSJES.xlsx", "rb") as f:
                     st.download_button(
                         label="Télécharger le fichier Excel",
                         data=f,
-                        file_name="output.xlsx",
+                        file_name="FSJES.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     )
         else:
